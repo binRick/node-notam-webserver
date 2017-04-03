@@ -1,0 +1,24 @@
+{
+  "name": "node-notam-webserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/binRick/node-notam-webserver.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/binRick/node-notam-webserver/issues"
+  },
+  "homepage": "https://github.com/binRick/node-notam-webserver#readme",
+  "dependencies": {
+    "async": "^2.3.0",
+    "notams": "^1.0.0",
+    "underscore": "^1.8.3"
+  }
+}
