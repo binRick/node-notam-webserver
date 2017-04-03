@@ -13,7 +13,7 @@ var app = require('express')(),
     redis = require('redis');
 
 clear();
-
+console.log('starting redis...');
 var redisServerProcess = spawn('redis-server', ['--bind', config.redis.host, '--port', config.redis.port]);
 redisServerProcess.stdout.on('data', function(dat) {});
 redisServerProcess.stderr.on('data', function(dat) {
@@ -26,7 +26,6 @@ console.log('Spawned redis server on host', config.redis.host, 'port', config.re
 var redisClient = redis.createClient(config.redis.port, config.redis.host);
 var geo = require('georedis').initialize(redisClient);
 console.log('GeoRedis Service ready for locations import..');
-
 var getNearbyIcaos = function(lat, lng, distance, unit, _fn) {
     geo.nearby({
         latitude: lat,
@@ -63,20 +62,20 @@ console.log('trying to add', _.size(icaoLocations), 'locations objects to geo da
 geo.addLocations(icaoLocations, function(err, reply) {
     if (err) throw err;
     else console.log('added', reply, 'ICAO locations to geo database');
-    app.get('/nearby/:type/:lat/:lng/:distance/:unit/:brief?', function(req, res) {
-        if (!_.contains(['icaos', 'notams'], req.params.type))
-            return res.end('Invalid type');
+    app.get('/nearby/:nearbyType/:lat/:lng/:distance/:unit/:brief?', function(req, res) {
+        if (!_.contains(['icaos', 'notams'], req.params.nearbyType))
+            return res.end('Invalid Nearby Type');
+        var distance = 50;
         var unit = 'mi';
-        var distance = 100;
         if (_.contains(['m', 'km', 'mi', 'ft'], req.params.unit))
             unit = req.params.unit;
-        if (req.params.distance > 0)
+        if (req.params.distance > 0 && req.params.distance < 200)
             distance = req.params.distance;
         getNearbyIcaos(req.params.lat, req.params.lng, distance, unit, function(err, nearbyLocations) {
             if (err) throw err;
-            if (req.params.type == 'icaos')
+            if (req.params.nearbyType == 'icaos')
                 return res.json(nearbyLocations.icaos);
-            else if (req.params.type == 'notams') {
+            else if (req.params.nearbyType == 'notams') {
                 var notamFormat = 'ICAO';
                 notams(nearbyLocations.icaos, {
                     format: notamFormat
@@ -95,10 +94,9 @@ geo.addLocations(icaoLocations, function(err, reply) {
                                 unit: unit,
                             };
                         }));
-			else return res.json(results);
+                    else return res.json(results);
                 });
             }
-
         });
     });
 
