@@ -13,14 +13,14 @@ var app = require('express')(),
     redis = require('redis');
 
 clear();
-console.log('starting redis...');
+console.log('starting redis-server...');
 var redisServerProcess = spawn('redis-server', ['--bind', config.redis.host, '--port', config.redis.port]);
 redisServerProcess.stdout.on('data', function(dat) {});
 redisServerProcess.stderr.on('data', function(dat) {
     console.log('redis server error:', dat.toString());
 });
 redisServerProcess.on('close', function(code) {
-    console.log('redis process exited with code', code);
+//    console.log('redis process exited with code', code);
 });
 console.log('Spawned redis server on host', config.redis.host, 'port', config.redis.port, 'as pid', redisServerProcess.pid);
 var redisClient = redis.createClient(config.redis.port, config.redis.host);
@@ -62,6 +62,9 @@ console.log('trying to add', _.size(icaoLocations), 'locations objects to geo da
 geo.addLocations(icaoLocations, function(err, reply) {
     if (err) throw err;
     else console.log('added', reply, 'ICAO locations to geo database');
+
+console.log(c.yellow('Creating API Endpoints...'));
+
     app.get('/nearby/:nearbyType/:lat/:lng/:distance/:unit/:brief?', function(req, res) {
         if (!_.contains(['icaos', 'notams'], req.params.nearbyType))
             return res.end('Invalid Nearby Type');
@@ -76,9 +79,8 @@ geo.addLocations(icaoLocations, function(err, reply) {
             if (req.params.nearbyType == 'icaos')
                 return res.json(nearbyLocations.icaos);
             else if (req.params.nearbyType == 'notams') {
-                var notamFormat = 'ICAO';
                 notams(nearbyLocations.icaos, {
-                    format: notamFormat
+                    format: 'ICAO'
                 }).then(function(results) {
                     results = results.filter(function(r) {
                         return r.notams.length > 0;
